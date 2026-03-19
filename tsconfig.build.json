@@ -5,14 +5,13 @@
     "composite": true,
     "declaration": true,
     "isolatedModules": true,
-    // remove if not possible to explicitly type everything
-    // this enables fast oxc type emitting
-    "isolatedDeclarations": true,
+    // defineComponent return types can't satisfy isolatedDeclarations
+    "isolatedDeclarations": false,
     "emitDeclarationOnly": true,
     "declarationDir": "./.tsc-types/src",
     "noEmit": false,
     "paths": {
-      "posva-template-lib": ["./src/index.ts"]
+      "cobe-vue": ["./src/index.ts"]
     }
   },
   "include": ["src/**/*"]

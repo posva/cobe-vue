@@ -6,7 +6,7 @@ const commonOptions = {
   format: ['esm'],
   deps: {
     onlyBundle: [],
-    neverBundle: ['vue'],
+    neverBundle: ['vue', 'cobe'],
   },
   target: 'esnext',
   tsconfig: 'tsconfig.build.json',
@@ -18,6 +18,6 @@ export default defineConfig([
     ...commonOptions,
     clean: true,
     entry: ['src/index.ts'],
-    globalName: 'PosvaTemplateLib',
+    globalName: 'CobeVue',
   },
 ])

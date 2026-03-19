@@ -1,22 +1,23 @@
 {
-  "name": "posva-template-lib",
+  "name": "cobe-vue",
   "version": "0.0.0",
-  "description": "A Vue.js library template",
+  "description": "Vue 3 component for COBE WebGL globe",
   "keywords": [
     "vue",
-    "library",
-    "template"
+    "cobe",
+    "globe",
+    "webgl"
   ],
-  "homepage": "https://github.com/posva/posva-template-lib",
+  "homepage": "https://github.com/posva/cobe-vue",
   "bugs": {
-    "url": "https://github.com/posva/posva-template-lib/issues"
+    "url": "https://github.com/posva/cobe-vue/issues"
   },
   "license": "MIT",
   "author": {
     "name": "Eduardo San Martin Morote",
     "email": "posva13@gmail.com"
   },
-  "repository": "posva/posva-template-lib",
+  "repository": "posva/cobe-vue",
   "funding": "https://github.com/sponsors/posva",
   "files": [
     "dist",
@@ -60,6 +61,8 @@
     "@types/node": "^24.12.0",
     "@types/semver": "^7.7.1",
     "@vitejs/plugin-vue": "^6.0.5",
+    "@vitest/browser": "^4.1.0",
+    "@vitest/browser-playwright": "^4.1.0",
     "@vitest/coverage-v8": "^4.1.0",
     "@vitest/ui": "^4.1.0",
     "@vue/test-utils": "^2.4.6",
@@ -71,12 +74,14 @@
     "lint-staged": "^16.4.0",
     "oxfmt": "^0.40.0",
     "oxlint": "^1.55.0",
+    "playwright": "^1.58.2",
     "semver": "^7.7.4",
     "simple-git-hooks": "^2.13.1",
     "size-limit": "^12.0.1",
     "tsdown": "^0.21.3",
     "typescript": "~5.9.3",
     "vitest": "^4.1.0",
+    "vitest-browser-vue": "^2.1.0",
     "vue": "^3.5.30"
   },
   "peerDependencies": {
@@ -96,7 +101,8 @@
       "path": "dist/index.mjs",
       "import": "*",
       "ignore": [
-        "vue"
+        "vue",
+        "cobe"
       ]
     }
   ],
@@ -106,5 +112,8 @@
       "esbuild",
       "simple-git-hooks"
     ]
+  },
+  "dependencies": {
+    "cobe": "^2.0.0"
   }
 }

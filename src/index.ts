@@ -1,3 +1,1 @@
-export const version = '0.0.0'
-
-export { useHello } from './useHello'
+export { Cobe, type CobeOptions } from './Cobe'

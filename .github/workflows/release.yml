@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       startsWith(github.ref_name, 'v') &&
-      github.repository == 'posva/posva-template-lib'
+      github.repository == 'posva/cobe-vue'
 
     environment: release
 
