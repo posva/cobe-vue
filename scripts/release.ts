@@ -1,0 +1,461 @@
+import fs from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { dirname, join, relative } from 'node:path'
+import { parseArgs } from 'node:util'
+import { fileURLToPath } from 'node:url'
+import chalk from 'chalk'
+import semver, { type ReleaseType } from 'semver'
+import prompts from '@posva/prompts'
+import { execa, type Options as ExecaOptions } from 'execa'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+const {
+  values: {
+    tag: optionTag,
+    dry: isDryRun,
+    skipCleanCheck: skipCleanGitCheck,
+    noDepsUpdate,
+    noLockUpdate,
+    all: skipChangeCheck,
+    help: showHelp,
+  },
+} = parseArgs({
+  options: {
+    tag: { type: 'string' },
+    dry: { type: 'boolean', default: false },
+    skipCleanCheck: { type: 'boolean', default: false },
+    noDepsUpdate: { type: 'boolean', default: false },
+    noLockUpdate: { type: 'boolean', default: false },
+    all: { type: 'boolean', default: false },
+    help: { type: 'boolean', short: 'h', default: false },
+  },
+})
+
+if (showHelp) {
+  console.log(
+    `
+Usage: node release.ts [flags]
+       node release.ts [ -h | --help ]
+
+Flags:
+  --tag               Publish under a given npm dist tag
+  --dry               Dry run
+  --skipCleanCheck    Skip checking if the git repo is clean
+  --noDepsUpdate      Skip updating dependencies in package.json files
+  --noLockUpdate      Skips updating the lock with "pnpm install"
+  --all               Skip checking if the packages have changed since last release
+`.trim(),
+  )
+  process.exit(0)
+}
+
+const EXPECTED_BRANCH = 'main'
+const MAIN_PKG_NAME = 'posva-template-lib'
+const IS_MAIN_PKG_AT_ROOT = true
+const PKG_FOLDERS = [join(__dirname, '..')]
+
+const FILES_TO_COMMIT = ['package.json', 'pnpm-lock.yaml', 'CHANGELOG.md']
+
+const run = (bin: string, args: string[], opts: ExecaOptions = {}) =>
+  execa(bin, args, { stdio: 'inherit', ...opts })
+
+const dryRun = async (bin: string, args: string[], opts: unknown = {}) =>
+  console.log(chalk.blue(`[dry-run] ${bin} ${args.join(' ')}`), opts)
+
+const runIfNotDry = isDryRun ? dryRun : run
+
+const step = (...msg: string[]) => console.log(chalk.cyan(...msg))
+
+interface PackageJson {
+  name: string
+  version: string
+  private?: boolean
+  dependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+  [key: string]: any
+}
+
+interface PackageInfo {
+  name: string
+  path: string
+  relativePath: string
+  version: string
+  pkg: PackageJson
+  start: string
+}
+
+async function main() {
+  if (!skipCleanGitCheck) {
+    const isDirtyGit = !!(await run('git', ['status', '--porcelain'], { stdio: 'pipe' })).stdout
+
+    if (isDirtyGit) {
+      console.log(chalk.red(`Git repo isn't clean.`))
+      return
+    }
+
+    const currentBranch = (await run('git', ['branch', '--show-current'], { stdio: 'pipe' })).stdout
+
+    if (currentBranch !== EXPECTED_BRANCH) {
+      console.log(
+        chalk.red(`You should be on branch "${EXPECTED_BRANCH}" but are on "${currentBranch}"`),
+      )
+      return
+    }
+  } else {
+    console.log(chalk.bold.white(`Skipping git checks...`))
+  }
+
+  if (!skipCleanGitCheck) {
+    const isOutdatedRE = new RegExp(
+      `\\W${EXPECTED_BRANCH}\\W.*(?:fast-forwardable|local out of date)`,
+      'i',
+    )
+
+    const isOutdatedGit = isOutdatedRE.test(
+      (await run('git', ['remote', 'show', 'origin'], { stdio: 'pipe' })).stdout as string,
+    )
+
+    if (isOutdatedGit) {
+      console.log(chalk.red(`Git branch is not in sync with remote`))
+      return
+    }
+  }
+
+  const changedPackages = await getChangedPackages(...PKG_FOLDERS)
+
+  if (!changedPackages.length) {
+    console.log(chalk.red(`No packages have changed since last release`))
+    return
+  }
+
+  if (isDryRun) {
+    console.log(`\n${chalk.bold.blue('This is a dry run')}\n`)
+  }
+
+  let packagesToRelease = changedPackages
+
+  if (packagesToRelease.length > 1) {
+    const { pickedPackages } = await prompts({
+      type: 'multiselect',
+      name: 'pickedPackages',
+      message: 'What packages do you want to release?',
+      instructions: false,
+      min: 1,
+      choices: changedPackages.map((pkg) => ({
+        title: pkg.name,
+        value: pkg.name,
+        selected: true,
+      })),
+    })
+
+    packagesToRelease = changedPackages.filter((pkg) => pickedPackages.includes(pkg.name))
+  }
+
+  step(`Ready to release ${packagesToRelease.map(({ name }) => chalk.bold.white(name)).join(', ')}`)
+
+  const pkgWithVersions: PackageInfo[] = []
+  for (const { name, path, pkg, relativePath } of packagesToRelease) {
+    let { version } = pkg
+
+    const prerelease = semver.prerelease(version)
+    const preId = prerelease && prerelease[0]
+
+    const versionIncrements: ReleaseType[] = [
+      'patch',
+      'minor',
+      'major',
+      ...(preId ? (['prepatch', 'preminor', 'premajor', 'prerelease'] as const) : []),
+    ]
+
+    const betaVersion = semver.inc(version, 'prerelease', 'beta')
+
+    const { release } = await prompts({
+      type: 'select',
+      name: 'release',
+      message: `Select release type for ${chalk.bold.white(name)}`,
+      choices: versionIncrements
+        .map((release) => {
+          const newVersion = semver.inc(version, release, preId as string)
+          return {
+            value: newVersion,
+            title: `${release}: ${name} (${newVersion})`,
+          }
+        })
+        .concat(
+          optionTag === 'beta'
+            ? [
+                {
+                  title: `beta: ${name} (${betaVersion})`,
+                  value: betaVersion,
+                },
+              ]
+            : [],
+        )
+        .concat([{ value: 'custom', title: 'custom' }]),
+    })
+
+    if (release === 'custom') {
+      version = (
+        await prompts({
+          type: 'text',
+          name: 'version',
+          message: `Input custom version (${chalk.bold.white(name)})`,
+          initial: version,
+        })
+      ).version
+    } else {
+      version = release
+    }
+
+    if (!semver.valid(version)) {
+      throw new Error(`invalid target version: ${version}`)
+    }
+
+    pkgWithVersions.push({
+      name,
+      path,
+      relativePath,
+      version,
+      pkg,
+      start: '',
+    })
+  }
+
+  const mainPkgIndex = packagesToRelease.findIndex(({ name }) => name === MAIN_PKG_NAME)
+  if (mainPkgIndex > 0) {
+    packagesToRelease.unshift(packagesToRelease.splice(mainPkgIndex, 1)[0]!)
+  }
+
+  const { yes: isReleaseConfirmed } = await prompts({
+    type: 'confirm',
+    name: 'yes',
+    message: `Releasing \n${pkgWithVersions
+      .map(({ name, version }) => `  · ${chalk.white(name)}: ${chalk.yellow.bold(`v${version}`)}`)
+      .join('\n')}\nConfirm?`,
+  })
+
+  if (!isReleaseConfirmed) {
+    return
+  }
+
+  step('\nUpdating versions in package.json files...')
+  await updateVersions(pkgWithVersions)
+
+  if (!noLockUpdate) {
+    step('\nUpdating lock...')
+    await runIfNotDry(`pnpm`, ['install'])
+  }
+
+  step('\nGenerating changelogs...')
+  await Promise.all(
+    pkgWithVersions.map(async (pkg) => {
+      step(` -> ${pkg.name} (${pkg.path})`)
+      const changelogExists = existsSync(join(pkg.path, 'CHANGELOG.md'))
+
+      if (!changelogExists) {
+        console.log(chalk.yellow(`No CHANGELOG.md found in ${pkg.name}`))
+      }
+
+      await runIfNotDry(
+        `pnpm`,
+        [
+          'exec',
+          'conventional-changelog',
+          '-i',
+          'CHANGELOG.md',
+          '--same-file',
+          '-p',
+          'angular',
+          '-r',
+          changelogExists ? '1' : '0',
+          '--commit-path',
+          ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_AT_ROOT
+            ? [join(pkg.path, 'src'), join(pkg.path, 'package.json')]
+            : ['.']),
+          ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_AT_ROOT
+            ? []
+            : ['--lerna-package', pkg.name]),
+          ...(pkg.name === MAIN_PKG_NAME ? [] : ['--tag-prefix', `${pkg.name}@`]),
+        ],
+        { cwd: pkg.path },
+      )
+    }),
+  )
+
+  const { yes: isChangelogCorrect } = await prompts({
+    type: 'confirm',
+    name: 'yes',
+    message: 'Are the changelogs correct?',
+    initial: true,
+  })
+
+  if (!isChangelogCorrect) {
+    return
+  }
+
+  const { stdout } = await run('git', ['diff'], { stdio: 'pipe' })
+  if (stdout) {
+    step('\nCommitting changes...')
+    await runIfNotDry('git', ['add', ...FILES_TO_COMMIT])
+    await runIfNotDry('git', [
+      'commit',
+      '-m',
+      `release: ${pkgWithVersions.map(({ name, version }) => `${name}@${version}`).join(' ')}`,
+    ])
+  } else {
+    console.log('No changes to commit.')
+  }
+
+  step('\nCreating tags...')
+  const versionsToPush: string[] = []
+  for (const pkg of pkgWithVersions) {
+    const tagName = pkg.name === MAIN_PKG_NAME ? `v${pkg.version}` : `${pkg.name}@${pkg.version}`
+
+    versionsToPush.push(`refs/tags/${tagName}`)
+    await runIfNotDry('git', ['tag', '-a', `${tagName}`, '-m', `Release ${tagName}`])
+  }
+
+  step('\nPushing to Github...')
+  for (const tag of versionsToPush) {
+    await runIfNotDry('git', ['push', 'origin', tag])
+  }
+  await runIfNotDry('git', ['push'])
+}
+
+async function updateVersions(packageList: PackageInfo[]) {
+  return Promise.all(
+    packageList.map(({ pkg, version, path, name }) => {
+      pkg.version = version
+      if (!noDepsUpdate) {
+        updateDeps(pkg, 'dependencies', packageList)
+        updateDeps(pkg, 'peerDependencies', packageList)
+      }
+      const content = `${JSON.stringify(pkg, null, 2)}\n`
+      return isDryRun
+        ? dryRun('write', [name], {
+            version: pkg.version,
+            dependencies: pkg.dependencies,
+            peerDependencies: pkg.peerDependencies,
+          })
+        : fs.writeFile(join(path, 'package.json'), content)
+    }),
+  )
+}
+
+function updateDeps(
+  pkg: PackageJson,
+  depType: 'dependencies' | 'peerDependencies',
+  updatedPackages: PackageInfo[],
+) {
+  const deps = pkg[depType]
+  if (!deps) return
+  step(`Updating ${chalk.bold(depType)} for ${chalk.bold.white(pkg.name)}...`)
+  Object.keys(deps).forEach((dep) => {
+    const updatedDep = updatedPackages.find((pkg) => pkg.name === dep)
+    if (dep && updatedDep && deps[dep]) {
+      if (deps[dep].startsWith('workspace:')) {
+        console.log(chalk.yellow.dim(`${pkg.name} -> ${depType} -> ${dep}@${deps[dep]} (skipped)`))
+      } else {
+        console.log(chalk.yellow(`${pkg.name} -> ${depType} -> ${dep}@>=${updatedDep.version}`))
+        deps[dep] = `>=${updatedDep.version}`
+      }
+    }
+  })
+}
+
+async function getLastTag(pkgName: string): Promise<string> {
+  try {
+    const { stdout } = await run(
+      'git',
+      [
+        'describe',
+        '--tags',
+        '--abbrev=0',
+        '--match',
+        pkgName === MAIN_PKG_NAME ? 'v*' : `${pkgName}@*`,
+      ],
+      {
+        stdio: 'pipe',
+      },
+    )
+
+    return stdout as string
+  } catch (error: any) {
+    console.log(chalk.dim(`Couldn't get "${chalk.bold(pkgName)}" last tag, using first commit...`))
+
+    if (error.exitCode !== 128) {
+      console.error(error)
+    }
+    const { stdout } = await run('git', ['rev-list', '--max-parents=0', 'HEAD'], { stdio: 'pipe' })
+    return stdout as string
+  }
+}
+
+async function getChangedPackages(...folders: string[]): Promise<PackageInfo[]> {
+  const pkgs = await Promise.all(
+    folders.map(async (folder) => {
+      if (!(await fs.lstat(folder)).isDirectory()) {
+        console.warn(chalk.dim(`Skipping "${folder}" as it is not a directory`))
+        return null
+      }
+
+      const pkg: PackageJson = JSON.parse(await fs.readFile(join(folder, 'package.json'), 'utf-8'))
+      if (pkg.private) {
+        console.info(chalk.dim(`Skipping "${pkg.name}" it's private`))
+        return null
+      }
+
+      const lastTag = await getLastTag(pkg.name)
+
+      const hasChanges = (
+        await run(
+          'git',
+          [
+            'diff',
+            '--name-only',
+            lastTag,
+            '--',
+            join(folder, 'src'),
+            join(folder, 'index.js'),
+            join(folder, 'package.json'),
+          ],
+          { stdio: 'pipe' },
+        )
+      ).stdout as string
+      const relativePath = relative(join(__dirname, '..'), folder)
+
+      if (hasChanges || skipChangeCheck) {
+        const changedFiles = hasChanges.split('\n').filter(Boolean)
+        console.log(
+          chalk.dim.blueBright(
+            `Found ${changedFiles.length} changed files in "${pkg.name}" since last release (${lastTag})`,
+          ),
+        )
+        console.log(chalk.dim(`"${changedFiles.join('", "')}"`))
+
+        return {
+          path: folder,
+          relativePath,
+          name: pkg.name,
+          version: pkg.version,
+          pkg,
+          start: lastTag,
+        }
+      } else {
+        console.warn(
+          chalk.dim(`Skipping "${pkg.name}" as it has no changes since last release (${lastTag})`),
+        )
+        return null
+      }
+    }),
+  )
+
+  return pkgs.filter((p): p is PackageInfo => !!p)
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})
