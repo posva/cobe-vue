@@ -1,1 +1,1 @@
-export { Cobe, type CobeOptions } from './Cobe'
+export { Cobe } from './Cobe'

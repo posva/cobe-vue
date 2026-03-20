@@ -1,41 +1,6 @@
-import {
-  defineComponent,
-  h,
-  onMounted,
-  onUnmounted,
-  shallowRef,
-  watch,
-  type PropType,
-  type SlotsType,
-} from 'vue'
+import { defineComponent, h, onMounted, onUnmounted, shallowRef, watch, type PropType } from 'vue'
 import createGlobe from 'cobe'
-import type { COBEOptions, Globe, Marker, Arc } from 'cobe'
-
-export interface CobeOptions {
-  width: number
-  height: number
-  phi: number
-  theta: number
-  mapSamples: number
-  mapBrightness: number
-  mapBaseBrightness?: number
-  baseColor: [number, number, number]
-  markerColor: [number, number, number]
-  glowColor: [number, number, number]
-  markers?: Marker[]
-  diffuse: number
-  devicePixelRatio: number
-  dark: number
-  opacity?: number
-  offset?: [number, number]
-  scale?: number
-  context?: WebGLContextAttributes
-  arcs?: Arc[]
-  arcColor?: [number, number, number]
-  arcWidth?: number
-  arcHeight?: number
-  markerElevation?: number
-}
+import type { Globe, Marker, Arc } from 'cobe'
 
 type Color = [red: number, green: number, blue: number]
 
@@ -45,8 +10,8 @@ export const Cobe = defineComponent({
   props: {
     width: { type: Number, required: true },
     height: { type: Number, required: true },
-    phi: Number,
-    theta: Number,
+    phi: { type: Number, default: 0 },
+    theta: { type: Number, default: 0 },
     mapSamples: { type: Number, default: 16_000 },
     mapBrightness: { type: Number, default: 6 },
     mapBaseBrightness: Number,
@@ -80,8 +45,6 @@ export const Cobe = defineComponent({
     markerElevation: Number,
   },
 
-  slots: Object as SlotsType<{}>,
-
   setup(props, { attrs }) {
     const canvasRef = shallowRef<HTMLCanvasElement>()
     let globe: Globe | undefined
@@ -93,8 +56,6 @@ export const Cobe = defineComponent({
     })
 
     watch(props, () => {
-      // globe?.update({ phi: props.phi })
-
       globe?.update(props)
     })
 

@@ -10,7 +10,9 @@
     "style": "off"
   },
   "rules": {
-    "no-debugger": ["warn"],
+    // TODO: set to "warn" once per-rule fix disable is supported
+    // https://github.com/oxc-project/oxc/issues/13306
+    "no-debugger": "off",
     "no-control-regex": "off",
     "no-dupe-class-members": "error",
     "no-unused-vars": "off",
@@ -22,7 +24,6 @@
   },
   "settings": {
     "jsx-a11y": {
-      "polymorphicPropName": "as",
       "components": {},
       "attributes": {}
     },
