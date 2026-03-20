@@ -10,6 +10,7 @@
     "style": "off"
   },
   "rules": {
+    "no-debugger": ["warn"],
     "no-control-regex": "off",
     "no-dupe-class-members": "error",
     "no-unused-vars": "off",
@@ -21,7 +22,7 @@
   },
   "settings": {
     "jsx-a11y": {
-      "polymorphicPropName": null,
+      "polymorphicPropName": "as",
       "components": {},
       "attributes": {}
     },
