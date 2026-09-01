@@ -1,5 +1,8 @@
 ignoreWorkspaceRootCheck: true
 strictPeerDependencies: false
+packages:
+  - website
 allowBuilds:
   esbuild: true
   simple-git-hooks: true
+  vue-demi: true
