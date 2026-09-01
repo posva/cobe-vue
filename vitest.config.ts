@@ -33,7 +33,13 @@ export default defineConfig({
           include: ['src/**/*.browser.test.ts'],
           browser: {
             enabled: true,
-            provider: playwright(),
+            ui: false,
+            viewport: { width: 1280, height: 720 },
+            provider: playwright({
+              contextOptions: {
+                deviceScaleFactor: 1,
+              },
+            }),
             instances: [{ browser: 'chromium' }],
             expect: {
               toMatchScreenshot: {

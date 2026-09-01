@@ -37,6 +37,8 @@ describe('Cobe browser', () => {
     // Wait for WebGL to render
     await new Promise((r) => setTimeout(r, 500))
 
-    await expect(container).toMatchScreenshot()
+    const canvas = container.querySelector('canvas')
+    expect(canvas).not.toBeNull()
+    await expect(canvas!).toMatchScreenshot()
   })
 })

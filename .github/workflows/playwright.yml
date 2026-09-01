@@ -53,3 +53,4 @@ jobs:
           name: playwright-failures
           path: .vitest-attachments/
           if-no-files-found: ignore
+          include-hidden-files: true
