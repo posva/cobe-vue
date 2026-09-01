@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import Vue from '@vitejs/plugin-vue'
 import { playwright } from '@vitest/browser-playwright'
+import { resolve } from 'node:path'
 
 export default defineConfig({
   plugins: [Vue()],
@@ -34,6 +35,30 @@ export default defineConfig({
             enabled: true,
             provider: playwright(),
             instances: [{ browser: 'chromium' }],
+            expect: {
+              toMatchScreenshot: {
+                comparatorName: 'pixelmatch',
+                comparatorOptions: {
+                  allowedMismatchedPixelRatio: 0.01,
+                },
+                resolveScreenshotPath: ({
+                  arg,
+                  browserName,
+                  ext,
+                  root,
+                  screenshotDirectory,
+                  testFileDirectory,
+                  testFileName,
+                }) =>
+                  resolve(
+                    root,
+                    testFileDirectory,
+                    screenshotDirectory,
+                    testFileName,
+                    `${arg}-${browserName}${ext}`,
+                  ),
+              },
+            },
           },
         },
       },
