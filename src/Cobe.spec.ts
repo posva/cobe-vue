@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { Cobe } from './Cobe'
-import { nextTick } from 'vue'
+import { nextTick, reactive } from 'vue'
 
 const destroyFn = vi.fn()
 const updateFn = vi.fn()
@@ -61,5 +61,77 @@ describe('Cobe', () => {
     expect(destroyFn).toHaveBeenCalledTimes(1)
   })
 
-  it.todo('updates globe on prop change', async () => {})
+  it('updates only changed scalar props', async () => {
+    const markers = [{ location: [0, 0] as [number, number], size: 0.1 }]
+    const arcs = [{ from: [0, 0] as [number, number], to: [1, 1] as [number, number] }]
+    const wrapper = mount(Cobe, { props: { ...baseProps, markers, arcs } })
+
+    await wrapper.setProps({ phi: 0.5 })
+
+    expect(updateFn).toHaveBeenCalledTimes(1)
+    expect(updateFn).toHaveBeenCalledWith({ phi: 0.5 })
+  })
+
+  it('updates width and height together', async () => {
+    const wrapper = mount(Cobe, { props: baseProps })
+
+    await wrapper.setProps({ width: 600 })
+
+    expect(updateFn).toHaveBeenCalledWith({ width: 600, height: 400 })
+  })
+
+  it('clears removed markers and arcs', async () => {
+    const wrapper = mount(Cobe, {
+      props: {
+        ...baseProps,
+        markers: [{ location: [0, 0], size: 0.1 }],
+        arcs: [{ from: [0, 0], to: [1, 1] }],
+      },
+    })
+
+    await wrapper.setProps({ markers: undefined })
+    expect(updateFn).toHaveBeenLastCalledWith({ markers: [] })
+
+    await wrapper.setProps({ arcs: undefined })
+    expect(updateFn).toHaveBeenLastCalledWith({ arcs: [] })
+  })
+
+  it('updates markers after a nested change', async () => {
+    const markers = reactive([{ location: [0, 0] as [number, number], size: 0.1 }])
+    mount(Cobe, { props: { ...baseProps, markers } })
+
+    markers[0]!.size = 0.2
+    await nextTick()
+
+    expect(updateFn).toHaveBeenCalledWith({ markers })
+  })
+
+  it('updates a color after an in-place channel change', async () => {
+    const glowColor = reactive<[number, number, number]>([1, 1, 1])
+    mount(Cobe, { props: { ...baseProps, glowColor } })
+
+    glowColor[0] = 0.5
+    await nextTick()
+
+    expect(updateFn).toHaveBeenCalledTimes(1)
+    expect(updateFn).toHaveBeenCalledWith({ glowColor })
+  })
+
+  it('rebuilds arcs after an arc geometry option changes', async () => {
+    const arcs = [{ from: [0, 0] as [number, number], to: [1, 1] as [number, number] }]
+    const wrapper = mount(Cobe, { props: { ...baseProps, arcs } })
+
+    await wrapper.setProps({ arcWidth: 0.5 })
+
+    expect(updateFn.mock.calls).toEqual([[{ arcWidth: 0.5 }], [{ arcs }]])
+  })
+
+  it('does not react to construction-only props', async () => {
+    const context = { alpha: false }
+    const wrapper = mount(Cobe, { props: baseProps })
+
+    await wrapper.setProps({ devicePixelRatio: 3, context })
+
+    expect(updateFn).toHaveBeenCalledTimes(0)
+  })
 })
