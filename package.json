@@ -1,6 +1,6 @@
 {
   "name": "cobe-vue",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "packageManager": "pnpm@11.24.0",
   "description": "Vue 3 component for COBE WebGL globe",
   "keywords": [
