@@ -40,7 +40,7 @@ onUnmounted(() => {
 
 <template>
   <div class="playground">
-    <div style="position: relative">
+    <div class="globe-stage" :style="{ width: width + 'px', height: height + 'px' }">
       <Cobe
         :width="width"
         :height="height"
@@ -257,6 +257,11 @@ body {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 16px;
+}
+
+.globe-stage {
+  position: relative;
+  flex: none;
 }
 
 .marker-label {
