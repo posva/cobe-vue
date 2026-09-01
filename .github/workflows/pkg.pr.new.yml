@@ -1,3 +1,5 @@
+# Requires the pkg.pr.new GitHub App installed on your repo:
+# https://github.com/apps/pkg-pr-new/installations/select_target
 name: Publish Any Commit
 
 on:

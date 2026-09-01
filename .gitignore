@@ -15,3 +15,4 @@ tsconfig.vitest-temp.json
 .tsc-types
 .cursor
 .vitest-attachments
+.pnpm-store

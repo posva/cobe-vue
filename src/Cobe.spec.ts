@@ -38,7 +38,7 @@ describe('Cobe', () => {
   it('calls createGlobe with canvas and options', async () => {
     const { default: createGlobe } = await import('cobe')
     mount(Cobe, { props: baseProps })
-    expect(createGlobe).toHaveBeenCalledOnce()
+    expect(createGlobe).toHaveBeenCalledTimes(1)
     const [canvas, opts] = (createGlobe as ReturnType<typeof vi.fn>).mock.calls[0]!
     expect(canvas).toBeInstanceOf(HTMLCanvasElement)
     expect(opts.width).toBe(400)
@@ -58,7 +58,7 @@ describe('Cobe', () => {
   it('calls destroy on unmount', () => {
     const wrapper = mount(Cobe, { props: baseProps })
     wrapper.unmount()
-    expect(destroyFn).toHaveBeenCalledOnce()
+    expect(destroyFn).toHaveBeenCalledTimes(1)
   })
 
   it.todo('updates globe on prop change', async () => {})

@@ -1,43 +1,45 @@
-# posva-template-lib
+# cobe-vue
 
-[![npm version](https://img.shields.io/npm/v/posva-template-lib.svg)](https://www.npmjs.com/package/posva-template-lib)
-[![ci](https://github.com/posva/posva-template-lib/actions/workflows/ci.yml/badge.svg)](https://github.com/posva/posva-template-lib/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/cobe-vue.svg)](https://npmx.dev/package/cobe-vue)
+[![ci](https://github.com/posva/cobe-vue/actions/workflows/ci.yml/badge.svg)](https://github.com/posva/cobe-vue/actions/workflows/ci.yml)
 
-A Vue.js library template.
+A Vue 3 component for the [COBE](https://github.com/shuding/cobe) WebGL globe.
 
-## Getting Started
+## Installation
 
-1. Fork or clone this repository
-2. Follow the **Migration Checklist** below to customize it for your library
-3. Replace `src/useHello.ts` with your own code
-4. Run `pnpm install` and start developing
+```sh
+pnpm add cobe-vue
+```
 
-## Migration Checklist
+## Usage
 
-After forking, find & replace `posva-template-lib` with your package name, then go through these steps:
+```vue
+<script setup lang="ts">
+import { Cobe } from 'cobe-vue'
+</script>
 
-1. **Find & replace** `posva-template-lib` with your package name in all files
-2. **Update `globalName`** in `tsdown.config.ts` (e.g. `PosvaTemplateLib` → `YourLibName`)
-3. **Update `package.json`**: `description`, `keywords`, `homepage`, `bugs`, `repository`
-4. **Update `LICENSE`** year and copyright holder
-5. **Update `release.yml`** repo condition (`github.repository == '...'`)
-6. **Set up npm trusted publishing** (see comments in `release.yml`)
-7. **Set up Codecov** (optional): add `codecov/codecov-action` step to `ci.yml`
-8. **Replace `src/`** with your library code
+<template>
+  <Cobe
+    :width="600"
+    :height="600"
+    :phi="0"
+    :theta="0.3"
+    :markers="[{ location: [48.8566, 2.3522], size: 0.08 }]"
+    style="width: 600px; height: 600px"
+  />
+</template>
+```
 
-## Scripts
+The component accepts COBE's globe options as Vue props and forwards other attributes to the
+underlying canvas. Updating props updates the globe, and unmounting the component destroys it.
 
-| Command           | Description                |
-| ----------------- | -------------------------- |
-| `pnpm dev`        | Start Vitest UI            |
-| `pnpm build`      | Build with tsdown          |
-| `pnpm test`       | Build + test + typecheck   |
-| `pnpm test:cov`   | Run tests with coverage    |
-| `pnpm test:types` | Typecheck                  |
-| `pnpm lint`       | Lint with oxlint           |
-| `pnpm fmt`        | Format with oxfmt          |
-| `pnpm release`    | Interactive release script |
-| `pnpm size`       | Check bundle size          |
+## Development
+
+```sh
+pnpm install
+pnpm play
+pnpm test
+```
 
 ## License
 

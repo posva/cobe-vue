@@ -1,7 +1,17 @@
 import { defineConfig } from 'tsdown'
 import type { UserConfig } from 'tsdown'
+import pkg from './package.json' with { type: 'json' }
+
+const banner = `
+/*!
+ * ${pkg.name} v${pkg.version}
+ * (c) ${new Date().getFullYear()} ${pkg.author.name}
+ * @license MIT
+ */
+`.trim()
 
 const commonOptions = {
+  banner,
   sourcemap: true,
   format: ['esm'],
   deps: {
@@ -10,7 +20,11 @@ const commonOptions = {
   },
   target: 'esnext',
   tsconfig: 'tsconfig.build.json',
-  dts: true,
+  dts: {
+    enabled: true,
+    oxc: false,
+  },
+  exports: true,
 } satisfies UserConfig
 
 export default defineConfig([
