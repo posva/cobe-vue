@@ -39,7 +39,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div style="display: flex; gap: 24px; padding: 16px; font-family: system-ui">
+  <div class="playground">
     <div style="position: relative">
       <Cobe
         :width="width"
@@ -240,6 +240,25 @@ onUnmounted(() => {
 </template>
 
 <style>
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  color: #213547;
+  background: #ffffff;
+}
+
+body {
+  margin: 0;
+}
+
+.playground {
+  display: flex;
+  gap: 24px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 16px;
+}
+
 .marker-label {
   position: absolute;
   bottom: anchor(top);
@@ -256,5 +275,12 @@ onUnmounted(() => {
   transition:
     opacity 0.3s,
     filter 0.3s;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #f5f5f5;
+    background: #121212;
+  }
 }
 </style>
