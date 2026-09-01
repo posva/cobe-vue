@@ -8,6 +8,8 @@ const activeIndex = ref(0)
 const progress = ref(0)
 const dragging = ref(false)
 const paused = ref(false)
+const ready = ref(false)
+const entering = ref(true)
 const pointerX = ref(0)
 const expanded = ref<string>()
 const liveViewers = 2847
@@ -31,6 +33,8 @@ const arcs = computed(() =>
 )
 
 let frame: number | undefined
+let revealFrame: number | undefined
+let revealTimer: ReturnType<typeof setTimeout> | undefined
 let observer: ResizeObserver | undefined
 let lastTime = 0
 let elapsed = 0
@@ -71,11 +75,19 @@ function stopDrag() {
 }
 
 function markerStyle(item: ShowcaseItem) {
-  return { positionAnchor: `--cobe-${item.id}`, opacity: `var(--cobe-visible-${item.id}, 0)` }
+  return {
+    positionAnchor: `--cobe-${item.id}`,
+    opacity: `calc(var(--cobe-visible-${item.id}, 0) * var(--showcase-enter-opacity))`,
+    filter: `var(--showcase-effect, blur(0)) blur(calc((1 - var(--cobe-visible-${item.id}, 0)) * 8px + var(--showcase-enter-blur)))`,
+  }
 }
 
 function arcStyle(id: string) {
-  return { positionAnchor: `--cobe-arc-${id}`, opacity: `var(--cobe-visible-arc-${id}, 0)` }
+  return {
+    positionAnchor: `--cobe-arc-${id}`,
+    opacity: `calc(var(--cobe-visible-arc-${id}, 0) * var(--showcase-enter-opacity))`,
+    filter: `var(--showcase-effect, blur(0)) blur(calc((1 - var(--cobe-visible-arc-${id}, 0)) * 8px + var(--showcase-enter-blur)))`,
+  }
 }
 
 onMounted(() => {
@@ -86,16 +98,31 @@ onMounted(() => {
     observer.observe(host.value)
   }
   frame = requestAnimationFrame(animate)
+  revealFrame = requestAnimationFrame(() => {
+    revealFrame = requestAnimationFrame(() => {
+      ready.value = true
+      revealTimer = setTimeout(() => {
+        entering.value = false
+      }, 1100)
+    })
+  })
 })
 
 onUnmounted(() => {
   observer?.disconnect()
   if (frame !== undefined) cancelAnimationFrame(frame)
+  if (revealFrame !== undefined) cancelAnimationFrame(revealFrame)
+  if (revealTimer !== undefined) clearTimeout(revealTimer)
 })
 </script>
 
 <template>
-  <div class="showcases-demo" @mouseenter="paused = true" @mouseleave="paused = false">
+  <div
+    class="showcases-demo"
+    :class="{ 'is-ready': ready, 'is-entering': entering }"
+    @mouseenter="paused = true"
+    @mouseleave="paused = false"
+  >
     <div ref="host" class="showcases-globe">
       <Cobe
         class="showcases-canvas"

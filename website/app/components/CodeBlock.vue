@@ -1,9 +1,12 @@
 <script setup lang="ts">
-defineProps<{ code: string }>()
+import { highlight } from 'sugar-high'
+
+const props = defineProps<{ code: string }>()
+const highlightedCode = computed(() => highlight(props.code))
 </script>
 
 <template>
   <div class="code-box">
-    <pre><code>{{ code }}</code></pre>
+    <pre><code v-html="highlightedCode" /></pre>
   </div>
 </template>

@@ -129,9 +129,7 @@ useSeoMeta({
     <section class="hero">
       <ClientOnly>
         <HeroGlobe />
-        <template #fallback
-          ><div class="hero-placeholder"><span>COBE</span></div></template
-        >
+        <template #fallback><div class="hero-placeholder" aria-hidden="true" /></template>
       </ClientOnly>
       <p class="hero-tagline">COBE for Vue: the lightweight WebGL globe</p>
       <nav class="hero-links" aria-label="Project links">
