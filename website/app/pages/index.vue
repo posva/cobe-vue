@@ -208,7 +208,10 @@ useSeoMeta({
 
     <section class="section">
       <h2>Playground</h2>
-      <p class="section-intro">Tune the most useful props and see updates applied live.</p>
+      <p class="section-intro">
+        Experiment with different options in real time. Adjust the controls to see how they affect
+        the globe.
+      </p>
       <ClientOnly><PlaygroundGlobe /></ClientOnly>
     </section>
 
