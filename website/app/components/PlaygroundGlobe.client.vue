@@ -66,10 +66,10 @@ onUnmounted(() => {
         :dark="dark"
         :diffuse="diffuse"
         :map-brightness="mapBrightness"
-        :base-color="dark ? [0.3, 0.3, 0.3] : [1, 1, 1]"
+        :base-color="dark ? [0.08, 0.12, 0.22] : [1, 1, 1]"
         :marker-color="[0, 0.86, 0.51]"
         :glow-color="dark ? [0.01, 0.02, 0.12] : [1, 1, 1]"
-        :arc-color="[0, 0.86, 0.51]"
+        :arc-color="[0.21, 0.89, 0.85]"
         :markers="markers"
         :arcs="arcs"
       />
