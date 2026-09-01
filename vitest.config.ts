@@ -3,6 +3,8 @@ import Vue from '@vitejs/plugin-vue'
 import { playwright } from '@vitest/browser-playwright'
 import { resolve } from 'node:path'
 
+const browserUI = process.argv.includes('--ui')
+
 export default defineConfig({
   plugins: [Vue()],
 
@@ -33,13 +35,17 @@ export default defineConfig({
           include: ['src/**/*.browser.test.ts'],
           browser: {
             enabled: true,
-            ui: false,
+            ui: browserUI,
             viewport: { width: 1280, height: 720 },
-            provider: playwright({
-              contextOptions: {
-                deviceScaleFactor: 1,
-              },
-            }),
+            provider: playwright(
+              browserUI
+                ? undefined
+                : {
+                    contextOptions: {
+                      deviceScaleFactor: 1,
+                    },
+                  },
+            ),
             instances: [{ browser: 'chromium' }],
             expect: {
               toMatchScreenshot: {
@@ -51,6 +57,7 @@ export default defineConfig({
                   arg,
                   browserName,
                   ext,
+                  platform,
                   root,
                   screenshotDirectory,
                   testFileDirectory,
@@ -61,7 +68,7 @@ export default defineConfig({
                     testFileDirectory,
                     screenshotDirectory,
                     testFileName,
-                    `${arg}-${browserName}${ext}`,
+                    `${arg}-${browserName}${browserUI ? `-${platform}-ui` : ''}${ext}`,
                   ),
               },
             },
