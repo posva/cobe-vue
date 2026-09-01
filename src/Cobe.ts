@@ -32,31 +32,43 @@ export const Cobe = defineComponent({
 
     /**
      * Horizontal rotation of the globe in radians.
+     *
+     * @default 0
      */
     phi: { type: Number, default: 0 },
 
     /**
      * Vertical rotation of the globe in radians.
+     *
+     * @default 0
      */
     theta: { type: Number, default: 0 },
 
     /**
      * Number of samples used to draw the world map.
+     *
+     * @default 16000
      */
     mapSamples: { type: Number, default: 16_000 },
 
     /**
      * Brightness of the world map samples.
+     *
+     * @default 6
      */
     mapBrightness: { type: Number, default: 6 },
 
     /**
      * Minimum brightness of the world map.
+     *
+     * @default 0
      */
     mapBaseBrightness: Number,
 
     /**
      * RGB color of the globe, with each channel between 0 and 1.
+     *
+     * @default [0.3, 0.3, 0.3]
      */
     baseColor: {
       type: Array as unknown as PropType<Color>,
@@ -65,6 +77,8 @@ export const Cobe = defineComponent({
 
     /**
      * Default RGB color of markers, with each channel between 0 and 1.
+     *
+     * @default [1, 0.5, 1]
      */
     markerColor: {
       type: Array as unknown as PropType<Color>,
@@ -73,6 +87,8 @@ export const Cobe = defineComponent({
 
     /**
      * RGB color of the glow around the globe, with each channel between 0 and 1.
+     *
+     * @default [1, 1, 1]
      */
     glowColor: {
       type: Array as unknown as PropType<Color>,
@@ -81,11 +97,15 @@ export const Cobe = defineComponent({
 
     /**
      * Markers to draw at latitude and longitude coordinates.
+     *
+     * @default []
      */
     markers: { type: Array as unknown as PropType<Marker[]>, default: undefined },
 
     /**
      * Strength of the globe's diffuse lighting.
+     *
+     * @default 1.2
      */
     diffuse: { type: Number, default: 1.2 },
 
@@ -95,21 +115,29 @@ export const Cobe = defineComponent({
      *
      * **THIS PROP IS NOT REACTIVE**, changing it requires re-instantiating the
      * component.
+     *
+     * @default 2
      */
     devicePixelRatio: { type: Number, default: 2 },
 
     /**
      * Amount of dark shading applied to the globe.
+     *
+     * @default 1
      */
     dark: { type: Number, default: 1 },
 
     /**
      * Opacity of the globe between 0 and 1.
+     *
+     * @default 1
      */
     opacity: Number,
 
     /**
      * Horizontal and vertical offset of the globe in CSS pixels.
+     *
+     * @default [0, 0]
      */
     offset: {
       type: Array as unknown as PropType<[number, number]>,
@@ -118,6 +146,8 @@ export const Cobe = defineComponent({
 
     /**
      * Scale of the globe within the canvas.
+     *
+     * @default 1
      */
     scale: Number,
 
@@ -126,31 +156,43 @@ export const Cobe = defineComponent({
      *
      * **THIS PROP IS NOT REACTIVE**, changing it requires re-instantiating the
      * component.
+     *
+     * @default { alpha: true, stencil: false, antialias: true, depth: false, preserveDrawingBuffer: false }
      */
     context: Object as PropType<WebGLContextAttributes>,
 
     /**
      * Arcs to draw between pairs of latitude and longitude coordinates.
+     *
+     * @default []
      */
     arcs: Array as unknown as PropType<Arc[]>,
 
     /**
      * Default RGB color of arcs, with each channel between 0 and 1.
+     *
+     * @default [0.3, 0.6, 1]
      */
     arcColor: Array as unknown as PropType<[number, number, number]>,
 
     /**
      * Width of the arcs.
+     *
+     * @default 1
      */
     arcWidth: Number,
 
     /**
      * Height of the arcs above the globe.
+     *
+     * @default 0.2
      */
     arcHeight: Number,
 
     /**
      * Elevation of markers above the globe.
+     *
+     * @default 0.05
      */
     markerElevation: Number,
   },
