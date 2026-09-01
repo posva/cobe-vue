@@ -6,14 +6,15 @@ type Location = [number, number]
 
 const themePresets = {
   default: {
-    label: 'Default (Light)',
-    dark: 0,
-    diffuse: 1.2,
+    label: 'Nuxt (Default)',
+    dark: 1,
+    diffuse: 1.4,
     mapSamples: 16_000,
-    mapBrightness: 6,
-    baseColor: [1, 1, 1] as Color,
-    markerColor: [0.3, 0.5, 1] as Color,
-    glowColor: [1, 1, 1] as Color,
+    mapBrightness: 10,
+    baseColor: [0.08, 0.12, 0.22] as Color,
+    markerColor: [0, 0.86, 0.51] as Color,
+    glowColor: [0.01, 0.02, 0.12] as Color,
+    arcColor: [0.21, 0.89, 0.85] as Color,
   },
   dark: {
     label: 'Dark Mode',
@@ -24,6 +25,7 @@ const themePresets = {
     baseColor: [0.3, 0.3, 0.3] as Color,
     markerColor: [1, 0.5, 1] as Color,
     glowColor: [0.1, 0.1, 0.1] as Color,
+    arcColor: [1, 0.5, 1] as Color,
   },
   minimal: {
     label: 'Minimal',
@@ -34,6 +36,7 @@ const themePresets = {
     baseColor: [1, 1, 1] as Color,
     markerColor: [0.1, 0.1, 0.1] as Color,
     glowColor: [1, 1, 1] as Color,
+    arcColor: [0.1, 0.1, 0.1] as Color,
   },
   neon: {
     label: 'Neon',
@@ -44,6 +47,7 @@ const themePresets = {
     baseColor: [0.02, 0.02, 0.1] as Color,
     markerColor: [0, 1, 0.8] as Color,
     glowColor: [0, 0.5, 0.8] as Color,
+    arcColor: [0, 1, 0.8] as Color,
   },
 }
 
@@ -136,10 +140,10 @@ const preset = ref<ThemePreset>('default')
 const markerPreset = ref<MarkerPreset>('World Cities')
 const phi = ref(0)
 const theta = ref(0.2)
-const dark = ref(0)
-const diffuse = ref(1.2)
+const dark = ref(1)
+const diffuse = ref(1.4)
 const mapSamples = ref(16_000)
-const mapBrightness = ref(6)
+const mapBrightness = ref(10)
 const mapBaseBrightness = ref(0)
 const scale = ref(1)
 const offsetX = ref(0)
@@ -253,7 +257,7 @@ onUnmounted(() => {
         :scale="scale"
         :offset="[offsetX, offsetY]"
         :marker-elevation="markerElevation"
-        :arc-color="theme.markerColor"
+        :arc-color="theme.arcColor"
         :arc-height="arcHeight"
         :arc-width="arcWidth"
         :markers="markers"
