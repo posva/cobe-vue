@@ -3,7 +3,7 @@ import Vue from '@vitejs/plugin-vue'
 import { playwright } from '@vitest/browser-playwright'
 import { resolve } from 'node:path'
 
-const browserUI = process.argv.includes('--ui')
+const browserViewport = { width: 1280, height: 720 }
 
 export default defineConfig({
   plugins: [Vue()],
@@ -35,17 +35,17 @@ export default defineConfig({
           include: ['src/**/*.browser.test.ts'],
           browser: {
             enabled: true,
-            ui: browserUI,
-            viewport: { width: 1280, height: 720 },
-            provider: playwright(
-              browserUI
-                ? undefined
-                : {
-                    contextOptions: {
-                      deviceScaleFactor: 1,
-                    },
-                  },
-            ),
+            headless: true,
+            viewport: browserViewport,
+            provider: playwright({
+              contextOptions: {
+                deviceScaleFactor: 1,
+                // TODO: Refactor this once Vitest 5 is released. Vitest 4 requires
+                // both viewports to match for stable screenshots:
+                // https://github.com/vitest-dev/vitest/pull/9745
+                viewport: browserViewport,
+              },
+            }),
             instances: [{ browser: 'chromium' }],
             expect: {
               toMatchScreenshot: {
@@ -57,7 +57,6 @@ export default defineConfig({
                   arg,
                   browserName,
                   ext,
-                  platform,
                   root,
                   screenshotDirectory,
                   testFileDirectory,
@@ -68,7 +67,7 @@ export default defineConfig({
                     testFileDirectory,
                     screenshotDirectory,
                     testFileName,
-                    `${arg}-${browserName}${browserUI ? `-${platform}-ui` : ''}${ext}`,
+                    `${arg}-${browserName}${ext}`,
                   ),
               },
             },
